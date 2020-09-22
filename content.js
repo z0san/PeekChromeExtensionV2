@@ -11,6 +11,7 @@ var keyDown = false;
 //by the user
 var triggerKeyCode = 17
 
+
 // runs on mouse over and gets the url that is being hovered over and if it's new
 // updates the current url and startes the screen shot for the new url
 window.onmouseover=function(e) {
@@ -35,7 +36,13 @@ window.onmouseover=function(e) {
 //function to get url if needed and is called whenever it is possible that a new url should be downloaded
 function urlUpdate() {
   if(currentUrl && currentKeyCode == triggerKeyCode && keyDown){
-    console.log(currentUrl);
+    console.log('requesting: ' + currentUrl);
+
+    chrome.runtime.sendMessage({url: currentUrl}, function(response) {
+      if(response.success && response.success == 'downloading') {
+        console.log('download succesfully started');
+      }
+    });
   }
 }
 
@@ -56,3 +63,15 @@ document.onkeydown = function(evt) {
 document.onkeyup = function(evt) {
   keyDown = false;
 };
+
+
+//add listener in case background.js requests us to take a screenshot
+chrome.runtime.onMessage.addListener(
+  function(request, sender, sendResponse) {
+    console.log(sender.tab ?
+                "from a content script:" + sender.tab.url :
+                "from the extension");
+    if (request.task == "take_ss")
+      sendResponse({farewell: "goodbye"});
+  }
+);
